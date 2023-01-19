@@ -51,22 +51,23 @@ commands:
             DEBIAN_FRONTEND=noninteractive
             export TZ=UTC
             ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-            
+
             apt-get install software-properties-common -y
             apt-add-repository ppa:ansible/ansible -y
             apt-get install ansible -y
       - run:
           name: Install Node.js version 13
           command: |
+            apt-get install curl -y
             curl -sL https://deb.nodesource.com/setup_13.x | bash -
             apt-get install nodejs  -y
             apt-get install npm  -y
       - run:
           name: Install awscli
           command: |
-            apt-get install awscli  -y
+            apt-get install awscli -y
       - run:
-          name: Install curl, tar, gzip, python and python-pip
+          name: Install tar, gzip, python and python-pip
           command: |
             apt-get install -y tar gzip python python-pip
 
