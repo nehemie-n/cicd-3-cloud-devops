@@ -56,10 +56,11 @@ commands:
             apt-add-repository ppa:ansible/ansible -y
             apt-get install ansible -y
       - run:
-          name: Install Node.js version 13
+          name: Install Node.js version
           command: |
             apt-get install curl -y
             apt-get install nodejs -y
+            apt-get install npm -y
       - run:
           name: Install awscli
           command: |
