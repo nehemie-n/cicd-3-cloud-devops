@@ -43,14 +43,14 @@ commands:
       - run:
           name: Update and upgrade package list
           command: |
-            apt-get update
+            apt-get update -y
             apt-get upgrade -y
       - run:
           name: Install ansible
           command: |
-            apt-get install software-properties-common
+            apt-get install software-properties-common -y
             apt-add-repository ppa:ansible/ansible -y
-            apt-get install ansible
+            apt-get install ansible -y
       - run:
           name: Install Node.js version 13
           command: |
