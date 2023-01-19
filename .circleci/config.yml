@@ -200,9 +200,9 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - inventory.txt
+            - .circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure
-      - destroy-environment
+      # - destroy-environment
 
   run-migrations:
     docker:
