@@ -59,9 +59,9 @@ commands:
           name: Install Node.js version 13
           command: |
             apt-get install curl -y
-            curl -sL https://deb.nodesource.com/setup_13.x | bash -
-            apt-get install nodejs  -y
-            apt-get install npm  -y
+            curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash 
+            source ~/.bashrc
+            nvm install 13.14.0
       - run:
           name: Install awscli
           command: |
