@@ -177,7 +177,7 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: cimg/python:3.11.1
+      - image: python:3.7-alpine3.11
     steps:
       # Checkout code from git
       - checkout
@@ -258,7 +258,7 @@ jobs:
 
   deploy-backend:
     docker:
-      - image: cimg/python:3.11.1
+      - image: python:3.7-alpine3.11
     steps:
       # Checkout code from git
       - checkout
