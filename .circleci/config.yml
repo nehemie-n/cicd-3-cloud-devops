@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build-frontend:
     docker:
-      - image: cimg/node:19.3.0
+      - image: circleci/node:13.8.0 # Rolled back to 
     steps:
       - checkout
       - restore_cache:
@@ -20,7 +20,7 @@ jobs:
 
   build-backend:
     docker:
-      - image: cimg/node:19.3.0
+      - image: circleci/node:13.8.0 # Rolled back to 
     steps:
       - checkout
       - restore_cache:
