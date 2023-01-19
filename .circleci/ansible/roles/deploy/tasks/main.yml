@@ -1,0 +1,19 @@
+---
+- name: Extract the zipped artifact on the EC2 instance
+  unarchive:
+    src: "artifact.tar.gz"
+    dest: "/var/www/backend"
+    remote_src: true
+
+- name: Install npm dependencies
+  command: npm install
+  args:
+    chdir: "/var/www/backend"
+
+- name: Stop the current app
+  command: pm2 stop default
+
+- name: Start the new app
+  command: pm2 start npm -- start
+  args:
+    chdir: "/var/www/backend"
