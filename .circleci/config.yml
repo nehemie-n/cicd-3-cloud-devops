@@ -43,28 +43,28 @@ commands:
       - run:
           name: Update and upgrade package list
           command: |
-            sudo apt-get update
-            sudo apt-get upgrade -y
+            apt-get update
+            apt-get upgrade -y
       - run:
           name: Install ansible
           command: |
-            sudo apt-get install software-properties-common
-            sudo apt-add-repository ppa:ansible/ansible -y
-            sudo apt-get install ansible
+            apt-get install software-properties-common
+            apt-add-repository ppa:ansible/ansible -y
+            apt-get install ansible
       - run:
           name: Install Node.js version 13
           command: |
             curl -sL https://deb.nodesource.com/setup_13.x | bash -
-            sudo apt-get install nodejs  -y
-            sudo apt-get install npm  -y
+            apt-get install nodejs  -y
+            apt-get install npm  -y
       - run:
           name: Install awscli
           command: |
-            sudo apt-get install awscli  -y
+            apt-get install awscli  -y
       - run:
           name: Install curl, tar, gzip, python and python-pip
           command: |
-            sudo apt-get install -y tar gzip python python-pip
+            apt-get install -y tar gzip python python-pip
 
 jobs:
   build-frontend:
@@ -287,14 +287,7 @@ jobs:
       # attach workspace
       - attach_workspace:
           at: ~/
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update ansible
-            apk add --update nodejs
-            apk add --update npm
-            apk add --update tar
-            apk add --update gzip
+      - install-depencencies
       - run:
           name: Deploy backend
           command: |
