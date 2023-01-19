@@ -35,6 +35,9 @@ jobs:
           paths: [backend/node_modules]
           key: backend-build
 
+
+  ### Testing section
+  
   test-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -67,6 +70,8 @@ jobs:
             npm install
             npm run test
 
+
+  ### Auditing Sectiom
   scan-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -78,10 +83,8 @@ jobs:
           name: Audit Frontend
           command: |
             cd frontend
-            npm install
-            npm audit fix --audit-level=critical --force
+            npm audit fix --force --audit-level=critical
             npm audit --audit-level=critical
-
 
   scan-backend:
     docker:
@@ -94,10 +97,8 @@ jobs:
           name: Audit Backend
           command: |
             cd backend
-            npm install
-            npm audit fix --audit-level=critical --force
+            npm audit fix --force --audit-level=critical
             npm audit --audit-level=critical
-
 
 
 workflows:
