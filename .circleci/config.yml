@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build-frontend:
     docker:
-      - image: circleci/node:13.8.0 # Rolled back to 
+      - image: circleci/node:13.8.0 # Rolled back to
     steps:
       - checkout
       - restore_cache:
@@ -20,7 +20,7 @@ jobs:
 
   build-backend:
     docker:
-      - image: circleci/node:13.8.0 # Rolled back to 
+      - image: circleci/node:13.8.0 # Rolled back to
     steps:
       - checkout
       - restore_cache:
@@ -35,9 +35,8 @@ jobs:
           paths: [backend/node_modules]
           key: backend-build
 
-
   ### Testing section
-  
+
   test-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -46,7 +45,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build] 
+          keys: [frontend-build]
       - run:
           name: Test frontend
           command: |
@@ -62,14 +61,13 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build] 
+          keys: [backend-build]
       - run:
           name: Test backend
           command: |
             cd backend
             npm install
             npm run test
-
 
   ### Auditing Sectiom
   scan-frontend:
@@ -83,7 +81,9 @@ jobs:
           name: Audit Frontend
           command: |
             cd frontend
-            npm audit fix --force --audit-level=critical
+            npm install --no-audit --no-fund
+            npm audit fix --audit-level=critical --force
+            npm audit fix --force
             npm audit --audit-level=critical
 
   scan-backend:
@@ -97,9 +97,10 @@ jobs:
           name: Audit Backend
           command: |
             cd backend
-            npm audit fix --force --audit-level=critical
+            npm install --no-audit --no-fund
+            npm audit fix --audit-level=critical --force
+            npm audit fix --force
             npm audit --audit-level=critical
-
 
 workflows:
   default:
@@ -112,5 +113,5 @@ workflows:
           requires: [build-backend]
       - scan-backend:
           requires: [build-backend]
-      - scan-frontend:          
-          requires: [build-frontend]      
+      - scan-frontend:
+          requires: [build-frontend]
