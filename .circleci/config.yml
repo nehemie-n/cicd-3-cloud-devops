@@ -30,10 +30,8 @@ commands:
           when: on_fail
           command: |
             # Your Memstash or kvdb.io GET URL code goes here
-            # Example: Memstash.io
-            # SUCCESS=$(curl -H "token: e52b52de-ee26-41a5-86e8-e8dcc3d995a5" --request GET https://api.memstash.io/values/migration_<< parameters.workflow_id >>)
             # Example: kvdb.io
-            # SUCCESS=$(curl --insecure  https://kvdb.io/9GE4jRtKznmVKRfvdBABBe/migration_<< parameters.workflow_id >>)
+            SUCCESS=$(curl --insecure  https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/migration_${CIRCLE_WORKFLOW_ID:0:7})
             # Logic for reverting the database state
             if (( $SUCCESS == 1 ));
             then
@@ -78,7 +76,6 @@ jobs:
           key: backend-build
 
   ### Testing section
-
   test-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -179,9 +176,171 @@ jobs:
             - project/.circleci/ansible/inventory.txt
 
       # Here's where you will add some code to rollback on failure
-      - destroy-environment:
-          backend_stack_name: "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
-          frontend_stack_name: "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
+      - destroy-environment
+
+  configure-infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      # Checkout code from git
+      - checkout
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: ["15:ac:8f:d9:aa:eb:2e:50:74:46:c4:99:9a:12:95:93"]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+            apk add --update nodejs
+            apk add --update npm
+            apk add --update tar
+            apk add --update gzip
+      - run:
+          name: Configure server
+          command: |
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - inventory.txt
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment
+
+  run-migrations:
+    docker:
+      - image: cimg/node:19.3.0
+    steps:
+      - checkout
+      - run:
+          name: Run migrations
+          command: |
+            cd backend
+            npm install
+            # Run and save the migration output
+            npm run migrations > migrations_dump.txt
+      - run:
+          name: Send migration status to kvdb.io OR memstash.io
+          command: |
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            then
+                # If you are using kvdb.io, generate the bucket ID "9Pv5FW5bQTewFPdjUWJf3U" in your local terminal first
+                curl https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+            fi
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment
+      - run-migrations # TODO: Might need to move this
+
+  deploy-frontend:
+    docker:
+      - image: cimg/aws:2022.11
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL = ${API_URL}"
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
+            echo "${API_URL}"
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment
+      - run-migrations
+
+  deploy-backend:
+    docker:
+      - image: python/alpine3.17
+    steps:
+      # Checkout code from git
+      - checkout
+      - attach_workspace:
+          at: ~/
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: ["15:ac:8f:d9:aa:eb:2e:50:74:46:c4:99:9a:12:95:93"]
+      # attach workspace
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+            apk add --update nodejs
+            apk add --update npm
+            apk add --update tar
+            apk add --update gzip
+      - run:
+          name: Deploy backend
+          command: |
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            # Zip the directory
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
+            echo "Contents  of the inventory.txt file is -------"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+      # Revert on fail
+      - destroy-environment
+      - run-migrations
+
+  smoke-test:
+    docker:
+      - image: alpine:latest
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
+      - run:
+          name: Backend smoke test.
+          command: |
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+                return 0
+            else
+                return 1
+            fi
+      - run:
+          name: Frontend smoke test.
+          command: |
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"            
+            echo ${URL} 
+            if curl -s ${URL} | grep "Welcome"
+            then
+                # Change this to 0 after the job fails
+              return 1
+            else
+              return 1
+            fi
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment
+      - run-migrations
 
 workflows:
   default:
@@ -200,4 +359,14 @@ workflows:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
-              only: [master]
+              only: [test-feature-branch]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
