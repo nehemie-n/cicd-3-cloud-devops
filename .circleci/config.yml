@@ -14,7 +14,6 @@ commands:
             # Destroy stack
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
-            return 0
 
   revert-migrations:
     description: Revert the last migration
@@ -296,6 +295,8 @@ jobs:
       - run:
           name: Deploy backend
           command: |
+            ls
+            pwd
             cd backend
             npm i
             npm run build
