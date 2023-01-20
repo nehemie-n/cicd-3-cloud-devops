@@ -70,7 +70,6 @@ commands:
           command: |
             apt-get install -y tar gzip
 
-
 jobs:
   build-frontend:
     docker:
@@ -317,10 +316,7 @@ jobs:
       - image: alpine:latest
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update curl
+      - install-depencencies
       - run:
           name: Get backend url
           command: |
