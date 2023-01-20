@@ -19,4 +19,5 @@
 - name: "Start Backend"
   shell: |
     cd /var/www/backend
+    sudo npm install pm2 -g
     pm2 start npm --name backend -- start
