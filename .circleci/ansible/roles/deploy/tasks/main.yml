@@ -3,10 +3,10 @@
   file:
     path: /var/www/backend
     state: directory
-    
+
 - name: Extract the zipped artifact on the EC2 instance
   unarchive:
-    src: "artifact.tar.gz"
+    src: artifact.tar.gz
     dest: "/var/www/backend"
     remote_src: true
 

@@ -3,13 +3,6 @@ version: 2.1
 commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-    parameters:
-      backend_stack_name:
-        type: string
-        default: "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
-      frontend_stack_name:
-        type: string
-        default: "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
     steps:
       - run:
           name: Destroy environments
@@ -18,9 +11,8 @@ commands:
             # Delete S3 objects
             aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             # Destry stack
-            aws cloudformation delete-stack --stack-name ${backend_stack_name}
-            aws cloudformation delete-stack --stack-name ${frontend_stack_name}
-            exit 1
+            aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
 
   revert-migrations:
     description: Revert the last migration
@@ -307,8 +299,11 @@ jobs:
             npm run build
             cd ..
             # Zip the directory
-            tar -C backend -czvf artifact.tar.gz .
             cd .circleci/ansible
+            mkdir files
+            cd files
+            tar -C ../../../backend -czvf artifact.tar.gz .
+            cd ../
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
