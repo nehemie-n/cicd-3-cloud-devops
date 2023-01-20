@@ -7,12 +7,12 @@
 
 - copy:
     src: /root/project/artifact.tar.gz
-    dest: ~/home/ubuntu
+    dest: /var/www
 
 - name: Extract the zipped artifact on the EC2 instance
   become: true
   unarchive:
-    src: ~/home/ubuntu/artifact.tar.gz
+    src: /var/www/artifact.tar.gz
     dest: "/var/www/backend"
     remote_src: true
 
