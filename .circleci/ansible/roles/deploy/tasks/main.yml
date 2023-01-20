@@ -1,4 +1,19 @@
 ---
+- name: Install nodejs and npm
+  become: true
+  apt:
+    name:
+      - nodejs
+      - npm
+    state: present
+
+- name: NODE | Install pm2
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
 - name: Create destination directory
   become: true
   file:
@@ -15,19 +30,6 @@
     src: /var/www/artifact.tar.gz
     dest: "/var/www/backend"
     remote_src: true
-
-- name: Install nodejs and npm
-  apt:
-    pkg:
-      - nodejs
-      - npm
-
-- name: NODE | Install pm2
-  npm:
-    name: pm2
-    global: yes
-    production: yes
-    state: present
 
 - name: "Start Backend"
   shell: |
