@@ -8,9 +8,10 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
+            echo "Circle Work FlowID - ${CIRCLE_WORKFLOW_ID:0:7}"
             # Delete S3 objects
             aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-            # Destry stack
+            # Destroy stack
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
 
