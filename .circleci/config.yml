@@ -294,6 +294,16 @@ jobs:
       - install-depencencies
       - run:
           name: Deploy backend
+          environment:
+            TYPEORM_CONNECTION: TYPEORM_CONNECTION
+            TYPEORM_MIGRATIONS_DIR: TYPEORM_MIGRATIONS_DIR
+            TYPEORM_ENTITIES: TYPEORM_ENTITIES
+            TYPEORM_MIGRATIONS: TYPEORM_MIGRATIONS
+            TYPEORM_HOST: TYPEORM_HOST
+            TYPEORM_PORT: TYPEORM_PORT
+            TYPEORM_USERNAME: TYPEORM_USERNAME
+            TYPEORM_PASSWORD: TYPEORM_PASSWORD
+            TYPEORM_DATABASE: TYPEORM_DATABASE
           command: |
             ls
             pwd
@@ -313,7 +323,7 @@ jobs:
 
   smoke-test:
     docker:
-      - image: alpine:latest
+      - image: ubuntu:latest
     steps:
       - checkout
       - install-depencencies
