@@ -217,11 +217,15 @@ jobs:
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints: ["15:ac:8f:d9:aa:eb:2e:50:74:46:c4:99:9a:12:95:93"]
+      # attach workspace
+      - attach_workspace:
+          at: ~/          
       - install-depencencies
       - run:
           name: Configure server
           command: |
             cd .circleci/ansible
+            cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
       # Here's where you will add some code to rollback on failure
       - destroy-environment
@@ -312,6 +316,7 @@ jobs:
             ls
             pwd
             cd backend
+            cat .env
             npm i
             npm run build
             cd ..
