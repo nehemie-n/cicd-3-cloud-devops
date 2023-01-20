@@ -1,24 +1,29 @@
 ---
 - name: Create destination directory
+  become: true
   file:
     path: /var/www/backend
     state: directory
 
 - name: Extract the zipped artifact on the EC2 instance
+  become: true
   unarchive:
-    src: artifact.tar.gz
+    src: /root/project/artifact.tar.gz
     dest: "/var/www/backend"
     remote_src: true
 
 - name: Install npm dependencies
+  become: true
   command: npm install
   args:
     chdir: "/var/www/backend"
 
 - name: Stop the current app
+  become: true
   command: pm2 stop default
 
 - name: Start the new app
+  become: true
   command: pm2 start npm -- start
   args:
     chdir: "/var/www/backend"
