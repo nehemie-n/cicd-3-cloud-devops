@@ -1,4 +1,9 @@
 ---
+- name: Create destination directory
+  file:
+    path: /var/www/backend
+    state: directory
+    
 - name: Extract the zipped artifact on the EC2 instance
   unarchive:
     src: "artifact.tar.gz"
