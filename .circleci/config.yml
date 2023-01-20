@@ -219,7 +219,7 @@ jobs:
           fingerprints: ["15:ac:8f:d9:aa:eb:2e:50:74:46:c4:99:9a:12:95:93"]
       # attach workspace
       - attach_workspace:
-          at: ~/          
+          at: ~/
       - install-depencencies
       - run:
           name: Configure server
@@ -309,7 +309,7 @@ jobs:
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
             echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
             echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
-            echo NODE_ENV=production >> "backend/.env"      
+            echo NODE_ENV=production >> "backend/.env"
       - run:
           name: Deploy backend
           command: |
@@ -344,9 +344,9 @@ jobs:
             echo "${API_URL}"
             if curl "${API_URL}/api/status" | grep "ok"
             then
-              return 0
+                exit 0
             else
-              return 1
+                exit 1
             fi
       - run:
           name: Frontend smoke test.
@@ -356,9 +356,9 @@ jobs:
             if curl -s ${URL} | grep "Welcome"
             then
               # Change this to 0 after the job fails
-              return 1
+              exit 1
             else
-              return 1
+              exit 1
             fi
       # Here's where you will add some code to rollback on failure
       - destroy-environment
