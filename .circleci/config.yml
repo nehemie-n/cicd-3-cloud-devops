@@ -39,10 +39,13 @@ commands:
           command: |
             apt-get update -y
             apt-get upgrade -y
-            apt-get install curl -y
+            DEBIAN_FRONTEND=noninteractive
+            export TZ=UTC
+            ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
       - run:
           name: Install Node.js version
           command: |
+            apt-get install curl -y
             apt-get install nodejs -y
             apt-get install npm -y
       - run:
@@ -57,13 +60,9 @@ commands:
           name: Install python and python-pip
           command: |
             apt install -y python3 python3-pip
-
       - run:
           name: Install ansible
           command: |
-            DEBIAN_FRONTEND=noninteractive
-            export TZ=UTC
-            ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
             apt-get install software-properties-common -y
             apt-add-repository ppa:ansible/ansible -y
