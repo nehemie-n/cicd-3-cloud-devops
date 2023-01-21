@@ -375,7 +375,8 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
-              --stack-name InitialStack
+              --stack-name InitialStack \
+              --tags project=udapeople
       - destroy-environment
       - revert-migrations
 
@@ -388,7 +389,7 @@ jobs:
       - run:
           name: Get old stack workflow id
           command: |
-            # your code here
+            #
             export OldWorkflowID=$(curl --insecure https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/OldWorkflowID)
             echo OldWorkflowID: $OldWorkflowID
             # Stack names
@@ -406,8 +407,6 @@ jobs:
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
             fi
-      - destroy-environment
-      - revert-migrations
 
 workflows:
   default:
