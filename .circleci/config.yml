@@ -199,7 +199,7 @@ jobs:
             echo "[all]" > inventory.txt
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --output text >> ~/project/.circleci/ansible/inventory.txt
+              --output text | head -n 1 >> ~/project/.circleci/ansible/inventory.txt
 
       - persist_to_workspace:
           root: ~/
@@ -237,6 +237,7 @@ jobs:
       - run:
           name: Run migrations
           command: |
+            pwd
             cd backend
             npm install
             # Run and save the migration output
@@ -245,9 +246,13 @@ jobs:
       - run:
           name: Send migration status to kvdb.io
           command: |
+            ls
+            pwd
             cd backend
+            echo migrations_dump  
             cat migrations_dump.txt
             pwd
+            ls
             if grep -q "has been executed successfully." migrations_dump.txt
             then
                 curl https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
@@ -268,7 +273,7 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | head -n 1)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
@@ -342,7 +347,7 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | head -n 1)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
             if curl "${API_URL}/api/status" | grep "ok"
