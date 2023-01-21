@@ -11,7 +11,7 @@ commands:
             echo "Circle Work FlowID - ${CIRCLE_WORKFLOW_ID:0:7}"
             # Delete S3 objects
             aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-            # Destroy stack
+            # Destroy stacks
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
 
@@ -22,7 +22,6 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            # Your Memstash or kvdb.io GET URL code goes here
             # Example: kvdb.io
             SUCCESS=$(curl --insecure  https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/migration_${CIRCLE_WORKFLOW_ID:0:7})
             # Logic for reverting the database state
@@ -110,7 +109,6 @@ jobs:
     docker:
       - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
       - checkout
       # Restore from cache
       - restore_cache:
@@ -126,7 +124,6 @@ jobs:
     docker:
       - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
       - checkout
       # Restore from cache
       - restore_cache:
@@ -171,6 +168,7 @@ jobs:
             npm audit fix --force
             npm audit --audit-level=critical
 
+  ### Infrastructure section
   deploy-infrastructure:
     docker:
       - image: cimg/aws:2022.11
@@ -205,14 +203,12 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
 
-      # Here's where you will add some code to rollback on failure
       - destroy-environment
 
   configure-infrastructure:
     docker:
       - image: ubuntu:latest
     steps:
-      # Checkout code from git
       - checkout
       # Add ssh keys with fingerprint
       - add_ssh_keys:
@@ -227,7 +223,6 @@ jobs:
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
-      # Here's where you will add some code to rollback on failure
       - destroy-environment
 
   run-migrations:
@@ -245,15 +240,17 @@ jobs:
       - run:
           name: Send migration status to kvdb.io OR memstash.io
           command: |
+            cat ~/project/backend/migrations_dump.txt
+            pwd
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
-                # If you are using kvdb.io, generate the bucket ID "9Pv5FW5bQTewFPdjUWJf3U" in your local terminal first
                 curl https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
-      # Here's where you will add some code to rollback on failure
+      # rollback on failure
       - destroy-environment
       - revert-migrations
 
+  ### Deployment
   deploy-frontend:
     docker:
       - image: ubuntu:latest
@@ -279,7 +276,7 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      # Here's where you will add some code to rollback on failure
+      # rollback on failure
       - destroy-environment
       - revert-migrations
 
@@ -287,7 +284,6 @@ jobs:
     docker:
       - image: ubuntu:latest
     steps:
-      # Checkout code from git
       - checkout
       # Add ssh keys with fingerprint
       - add_ssh_keys:
@@ -355,12 +351,62 @@ jobs:
             echo ${URL} 
             if curl -s ${URL} | grep "Welcome"
             then
-              # Change this to 0 after the job fails
-              exit 1
+              exit 0
             else
               exit 1
             fi
-      # Here's where you will add some code to rollback on failure
+      - destroy-environment
+      - revert-migrations
+
+  ### Update and cleanup
+  cloudfront-update:
+    docker:
+      - image: ubuntu:latest
+    steps:
+      - checkout
+      - install-depencencies
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            export OldWorkflowID=$(aws cloudformation \
+                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                      --no-paginate --output text)
+            curl https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/OldWorkflowID -d "${OldWorkflowID}"
+
+            aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --stack-name InitialStack
+      - destroy-environment
+      - revert-migrations
+
+  cleanup:
+    docker:
+      - image: ubuntu:latest
+    steps:
+      - checkout
+      - install-depencencies
+      - run:
+          name: Get old stack workflow id
+          command: |
+            # your code here
+            export OldWorkflowID=$(curl --insecure https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/OldWorkflowID)
+            echo OldWorkflowID: $OldWorkflowID
+            # Stack names
+            export STACKS=($(aws cloudformation list-stacks \
+                --query "StackSummaries[*].StackName" \
+                --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            echo Stack names: "${STACKS[@]}"
+      - run:
+          name: Remove old stacks and files
+          command: |
+            # Remove the S3 files first 
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            then
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive 
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            fi
       - destroy-environment
       - revert-migrations
 
@@ -392,3 +438,7 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
+      - cloudfront-update:
+          requires: [smoke-test]
+      - cleanup:
+          requires: [cloudfront-update]
