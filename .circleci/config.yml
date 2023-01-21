@@ -197,9 +197,7 @@ jobs:
           name: Add back-end ip to ansible inventory
           command: |
             echo "[all]" > inventory.txt
-            aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --output text | head -n 1 >> ~/project/.circleci/ansible/inventory.txt
+            aws ec2 describe-instances --query 'Reservations[*].Instances[*].[PublicIpAddress,LaunchTime]' --output text | sort -k2 -r | awk '{print $1}' | head -n 1 >> ~/project/.circleci/ansible/inventory.txt
 
       - persist_to_workspace:
           root: ~/
@@ -273,7 +271,7 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | head -n 1)
+            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].[PublicIpAddress,LaunchTime]' --output text | sort -k2 -r | awk '{print $1}' | head -n 1)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
@@ -347,7 +345,7 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | head -n 1)
+            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].[PublicIpAddress,LaunchTime]' --output text | sort -k2 -r | awk '{print $1}' | head -n 1)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
             if curl "${API_URL}/api/status" | grep "ok"
@@ -415,8 +413,10 @@ jobs:
           command: |
             # Remove the S3 files first 
             export OldWorkflowID=$(curl --insecure https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/OldWorkflowID)
+            echo OldWorkflowID: $OldWorkflowID
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
+              echo "Should be deleting"
               aws s3 rm s3://udapeople-${OldWorkflowID} --recursive
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
