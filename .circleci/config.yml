@@ -72,6 +72,24 @@ commands:
           command: |
             apt-get install -y tar gzip
 
+  add-backend-env:
+    description: Adds the backend envs to .env
+    steps:
+      - run:
+          name: Add .env vars to backend distro
+          command: |
+            echo ENVIRONMENT=production > backend/.env
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
+            echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
+            echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
+            echo NODE_ENV=production >> "backend/.env"
+
 jobs:
   build-frontend:
     docker:
@@ -232,6 +250,10 @@ jobs:
       - image: cimg/node:19.3.0
     steps:
       - checkout
+      # attach workspace
+      - attach_workspace:
+          at: ~/
+      - add-backend-env
       - run:
           name: Run migrations
           command: |
@@ -302,20 +324,7 @@ jobs:
           at: ~/
       - install-depencencies
       - install-ansible-dependencies
-      - run:
-          name: Add .env vars to backend distro
-          command: |
-            echo ENVIRONMENT=production > backend/.env
-            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
-            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
-            echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
-            echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
-            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
-            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
-            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
-            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
-            echo NODE_ENV=production >> "backend/.env"
+      - add-backend-env
       - run:
           name: Deploy backend
           command: |
@@ -398,7 +407,7 @@ jobs:
       - checkout
       - install-depencencies
       - run:
-          name: Get old stack workflow id
+          name: Remove old stacks and files
           command: |
             #
             export OldWorkflowID=$(curl --insecure https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/OldWorkflowID)
@@ -408,12 +417,7 @@ jobs:
                 --query "StackSummaries[*].StackName" \
                 --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
             echo Stack names: "${STACKS[@]}"
-      - run:
-          name: Remove old stacks and files
-          command: |
             # Remove the S3 files first 
-            export OldWorkflowID=$(curl --insecure https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/OldWorkflowID)
-            echo OldWorkflowID: $OldWorkflowID
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
               echo "Should be deleting"
