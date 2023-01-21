@@ -385,7 +385,11 @@ jobs:
       - image: ubuntu:latest
     steps:
       - checkout
-      - install-depencencies
+      - run:
+          name: Install dependencies
+          command: |
+            apt-get install awscli -y
+            apt-get install curl -y
       - run:
           name: Get old stack workflow id
           command: |
