@@ -22,7 +22,6 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            # Example: kvdb.io
             SUCCESS=$(curl --insecure  https://kvdb.io/9Pv5FW5bQTewFPdjUWJf3U/migration_${CIRCLE_WORKFLOW_ID:0:7})
             # Logic for reverting the database state
             if (( $SUCCESS == 1 ));
