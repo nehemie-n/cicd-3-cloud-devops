@@ -62,7 +62,7 @@ export class Employee extends AggregateRoot<number> {
   public personalEmail: string;
 
   @Column({ nullable: true })
-  public birthdate: Date;
+  public birthdate: Date | any;
 
   @Column()
   public startDate: Date;
@@ -95,7 +95,7 @@ export class Employee extends AggregateRoot<number> {
   public city: string;
 
   @Column()
-  public effectiveDate: Date;
+  public effectiveDate: Date | any;
 
   @Column('decimal')
   public salary: number;
@@ -121,7 +121,7 @@ export enum SalaryType {
 }
 
 export function getDateFromString(date: string): Date {
-  return moment(date).format('M/D/YYYY');
+  return moment(date).format('M/D/YYYY') as any;
 }
 
 function getGenderFromEnum(gender: string): Gender {
