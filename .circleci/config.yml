@@ -168,9 +168,6 @@ jobs:
           name: Audit Frontend
           command: |
             cd frontend
-            npm install --no-audit --no-fund
-            npm audit fix --audit-level=critical --force
-            npm audit fix --force
             npm audit --audit-level=critical
 
   scan-backend:
@@ -184,9 +181,6 @@ jobs:
           name: Audit Backend
           command: |
             cd backend
-            npm install --no-audit --no-fund
-            npm audit fix --audit-level=critical --force
-            npm audit fix --force
             npm audit --audit-level=critical
 
   ### Infrastructure section
