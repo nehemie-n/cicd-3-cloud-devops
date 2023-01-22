@@ -214,7 +214,7 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            echo "[all]" > ~/project/.circleci/ansible/inventory.txt
+            echo "[web]" > ~/project/.circleci/ansible/inventory.txt
             aws ec2 describe-instances --query 'Reservations[*].Instances[*].[PublicIpAddress,LaunchTime]' --output text | sort -k2 -r | awk '{print $1}' | head -n 1 >> ~/project/.circleci/ansible/inventory.txt
             cat ~/project/.circleci/ansible/inventory.txt
             pwd
